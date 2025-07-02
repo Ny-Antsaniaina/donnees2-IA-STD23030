@@ -3,8 +3,10 @@ import requests
 import pandas as pd
 from datetime import datetime
 
+# Clé API OpenWeather (à garder privée en pratique)
 API_KEY = "8d4c33229d157905c817865855474725"
 
+# Liste des villes à analyser
 villes = [
     {"nom": "Antananarivo", "pays": "MG"},
     {"nom": "Paris", "pays": "FR"},
@@ -12,6 +14,8 @@ villes = [
     {"nom": "London", "pays": "GB"}
 ]
 
+
+# Étape 1 : Extraction des données météo via l'API
 def extract_weather_data():
     print(" Extraction des données météo...")
     all_data = []
@@ -33,28 +37,36 @@ def extract_weather_data():
                 })
 
         except Exception as e:
-            print(f"❌ Erreur API pour {ville['nom']}: {e}")
+            print(f" Erreur lors de l'extraction pour {ville['nom']}: {e}")
 
     df = pd.DataFrame(all_data)
     os.makedirs("data", exist_ok=True)
     df.to_csv("data/raw_weather.csv", index=False)
-    print("✅ Extraction terminée.")
+    print(" Extraction terminée.")
 
+
+# Étape 2 : Nettoyage des données météo
 def clean_weather_data():
     print(" Nettoyage des données météo...")
     df = pd.read_csv("data/raw_weather.csv")
     df["date"] = pd.to_datetime(df["date"])
+
+    # Ajout d'une colonne binaire "is_rainy"
     df["is_rainy"] = df["weather"].apply(lambda w: 1 if "Rain" in w else 0)
+
     df.dropna(inplace=True)
     df.to_csv("data/clean_weather.csv", index=False)
     print(" Données nettoyées et sauvegardées.")
 
+
+# Étape 3 : Sauvegarde des moyennes journalières
 def save_weather_data():
-    print(" Sauvegarde des statistiques météo...")
+    print(" Calcul des statistiques météo journalières...")
     df = pd.read_csv("data/clean_weather.csv")
     df["date"] = pd.to_datetime(df["date"])
     df["day"] = df["date"].dt.date
 
+    # Moyenne de température et pluie par jour et par ville
     summary = df.groupby(["ville", "day"]).agg({
         "temp": "mean",
         "is_rainy": lambda x: 1 if x.sum() > 0 else 0
@@ -62,4 +74,4 @@ def save_weather_data():
 
     summary.columns = ["ville", "day", "temp_moyenne", "jour_pluvieux"]
     summary.to_csv("data/stats_weather.csv", index=False)
-    print("✅ Statistiques météo enregistrées.")
+    print(" Statistiques météo enregistrées.")
