@@ -3,6 +3,8 @@ import requests
 import pandas as pd
 from datetime import datetime
 
+from merge_weather_data import merge_weather_data
+
 # Clé API OpenWeather (à garder privée en pratique)
 API_KEY = "8d4c33229d157905c817865855474725"
 
@@ -75,3 +77,10 @@ def save_weather_data():
     summary.columns = ["ville", "day", "temp_moyenne", "jour_pluvieux"]
     summary.to_csv("data/stats_weather.csv", index=False)
     print(" Statistiques météo enregistrées.")
+
+
+if __name__ == "__main__":
+    extract_weather_data()
+    clean_weather_data()
+    save_weather_data()
+    merge_weather_data()
