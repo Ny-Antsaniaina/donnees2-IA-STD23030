@@ -1,30 +1,32 @@
-import sys
-import os
 from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-
-from scripts.merge_weather_data import merge_weather_data
-from scripts.weather_etl import extract_weather_data, clean_weather_data, save_weather_data
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
+import sys
+import os
 
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+scripts_dir = os.path.abspath(os.path.join(current_dir, "..", "scripts"))
+sys.path.append(scripts_dir)
+
+from weather_etl import extract_weather_data, clean_weather_data, save_weather_data
+from merge_weather_data import merge_weather_data
 
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2025, 6, 17),
-    'retries': 1
+    'retries': 1,
 }
 
 with DAG(
-    dag_id='weather_etl_pipeline',
+    dag_id='weather_etl_pipeline_examen',
     default_args=default_args,
-    schedule_interval='@daily',
+    schedule='@daily',
     catchup=False,
     max_active_runs=1,
     tags=["weather", "ETL"]
 ) as dag:
+
     extract = PythonOperator(
         task_id='extract_weather',
         python_callable=extract_weather_data,
