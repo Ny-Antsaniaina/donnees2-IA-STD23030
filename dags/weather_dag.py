@@ -12,6 +12,7 @@ sys.path.insert(0, scripts_dir)
 # ✅ Import des fonctions une fois le chemin ajouté
 from weather_etl import extract_weather_data, clean_weather_data, save_weather_data
 from merge_weather_data import merge_weather_data
+from get_5y_weather_openmeteo import download_all
 
 default_args = {
     'owner': 'airflow',
@@ -26,6 +27,11 @@ with DAG(
     catchup=False,
     tags=["weather", "ETL"],
 ) as dag:
+
+    download_hist_weather_data = PythonOperator(
+        task_id="download_hist_weather",
+        python_callable=download_all
+    )
 
     extract = PythonOperator(
         task_id="extract_weather",
@@ -47,4 +53,4 @@ with DAG(
         python_callable=merge_weather_data
     )
 
-    extract >> clean >> save >> merge
+    download_hist_weather_data >> extract >> clean >> save >> merge

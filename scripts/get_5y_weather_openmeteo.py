@@ -6,8 +6,8 @@ import requests
 import pandas as pd
 import os
 
-#  Créer le dossier de données
-os.makedirs("data", exist_ok=True)
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+os.makedirs(DATA_DIR, exist_ok=True)
 
 #  Coordonnées GPS des villes
 VILLES = {
@@ -21,7 +21,7 @@ VILLES = {
 TODAY = datetime.now().date()
 START_DATE = (datetime.now() - relativedelta(years=5)).date()
 YEARS_RANGE = f"{START_DATE.year}_{TODAY.year}"
-OUTPUT_FILE = f"data/openmeteo_hist_{YEARS_RANGE}.csv"
+OUTPUT_FILE = os.path.join(DATA_DIR, f"openmeteo_hist_{YEARS_RANGE}.csv")
 
 def get_openmeteo_data(lat, lon, ville):
     print(f" Téléchargement des données pour {ville}...")
@@ -42,7 +42,7 @@ def get_openmeteo_data(lat, lon, ville):
         df["ville"] = ville
         return df
     except Exception as e:
-        print(f"❌ Erreur pour {ville}: {e}")
+        print(f" Erreur pour {ville}: {e}")
         return pd.DataFrame()
 
 def download_all():

@@ -2,6 +2,8 @@ import pandas as pd
 from datetime import datetime
 import os
 
+from dateutil.relativedelta import relativedelta
+
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -11,7 +13,11 @@ def merge_weather_data():
     try:
         date_str = datetime.today().strftime("%Y-%m-%d")
 
-        hist_path = os.path.join(DATA_DIR, "openmeteo_hist_2020_2025.csv")
+        TODAY = datetime.now().date()
+        START_DATE = (datetime.now() - relativedelta(years=5)).date()
+        YEARS_RANGE = f"{START_DATE.year}_{TODAY.year}"
+
+        hist_path = os.path.join(DATA_DIR, f"openmeteo_hist_{YEARS_RANGE}.csv")
         recent_path = os.path.join(DATA_DIR, f"stats_weather_{date_str}.csv")
         output_path = os.path.join(DATA_DIR, "merge_weather.csv")
 
