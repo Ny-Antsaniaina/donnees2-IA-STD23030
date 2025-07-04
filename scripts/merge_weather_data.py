@@ -1,41 +1,43 @@
-import os
 import pandas as pd
+from datetime import datetime
+import os
 
 def merge_weather_data():
-    print(" Fusion des données historiques et récentes...")
+    print("📦 Démarrage de la fusion des données météo...")
 
-    recent_path = "data/clean_weather.csv"
-    hist_path = "data/openmeteo_hist_2020_2025.csv"
-    output_path = "data/merge_weather.csv"
+    try:
+        # 📅 Date du jour au format YYYY-MM-DD
+        date_str = datetime.today().strftime("%Y-%m-%d")
 
-    # Vérification que les fichiers existent
-    if not os.path.exists(hist_path) or not os.path.exists(recent_path):
-        raise FileNotFoundError(" Fichier historique ou récent manquant.")
+        # 📁 Chemins vers les fichiers
+        hist_path = "data/openmeteo_hist_2020_2025.csv"
+        recent_path = f"data/stats_weather_{date_str}.csv"
 
-    # Chargement des données historiques (Open-Meteo déjà propre)
-    df_hist = pd.read_csv(hist_path)
+        print(f"🔍 Lecture de : {hist_path}")
+        print(f"🔍 Lecture de : {recent_path}")
 
-    # Renommage pour homogénéiser les noms avec les données récentes
-    df_hist = df_hist.rename(columns={
-        "date": "date",
-        "temp": "temp",
-        "is_rainy": "is_rainy",
-    })
+        # 📄 Chargement des données
+        df_hist = pd.read_csv(hist_path)
+        df_recent = pd.read_csv(recent_path)
 
-    # Chargement des données récentes
-    df_recent = pd.read_csv(recent_path)
+        print(f"✅ Historique chargé : {df_hist.shape[0]} lignes")
+        print(f"✅ Récent chargé : {df_recent.shape[0]} lignes")
 
-    # Sélection des colonnes utiles
-    df_hist = df_hist[["ville", "date", "temp", "is_rainy"]]
-    df_recent = df_recent[["ville", "date", "temp", "is_rainy"]]
+        # 📅 Harmonisation des noms de colonnes et des types
+        df_hist["date"] = pd.to_datetime(df_hist["date"])
+        df_recent = df_recent.rename(columns={"day": "date"})
+        df_recent["date"] = pd.to_datetime(df_recent["date"])
 
-    # Fusion
-    df_merge = pd.concat([df_hist, df_recent], ignore_index=True)
+        # 🔄 Fusion
+        merged = pd.concat([df_hist, df_recent], ignore_index=True)
 
-    # Nettoyage final
-    df_merge.dropna(inplace=True)
-    df_merge.drop_duplicates(subset=["ville", "date"], inplace=True)
-    df_merge = df_merge.sort_values(by=["ville", "date"])
+        # 💾 Sauvegarde
+        os.makedirs("data", exist_ok=True)
+        merged.to_csv("data/merge_weather.csv", index=False)
 
-    df_merge.to_csv(output_path, index=False)
-    print("✅ Fusion enregistrée dans", output_path)
+        print("✅ Fusion terminée et enregistrée dans : data/merge_weather.csv")
+
+    except FileNotFoundError as e:
+        print(f"❌ Fichier manquant : {e.filename}")
+    except Exception as e:
+        print(f"❌ Erreur inattendue lors de la fusion : {e}")
