@@ -4,7 +4,7 @@ from airflow.operators.python import PythonOperator
 import os
 import sys
 
-# 🔧 Ajout du chemin absolu vers examen/scripts
+#  Ajout du chemin absolu vers examen/scripts
 dag_dir = os.path.dirname(__file__)
 scripts_dir = os.path.abspath(os.path.join(dag_dir, "..", "scripts"))
 sys.path.insert(0, scripts_dir)

@@ -6,10 +6,10 @@ import requests
 import pandas as pd
 import os
 
-# 📁 Créer le dossier de données
+#  Créer le dossier de données
 os.makedirs("data", exist_ok=True)
 
-# 🌍 Coordonnées GPS des villes
+#  Coordonnées GPS des villes
 VILLES = {
     "Antananarivo": (-18.8792, 47.5079),
     "Paris": (48.8566, 2.3522),
@@ -17,14 +17,14 @@ VILLES = {
     "London": (51.5074, -0.1278)
 }
 
-# 📅 Calcul des dates
+# Calcul des dates
 TODAY = datetime.now().date()
 START_DATE = (datetime.now() - relativedelta(years=5)).date()
 YEARS_RANGE = f"{START_DATE.year}_{TODAY.year}"
 OUTPUT_FILE = f"data/openmeteo_hist_{YEARS_RANGE}.csv"
 
 def get_openmeteo_data(lat, lon, ville):
-    print(f"🌐 Téléchargement des données pour {ville}...")
+    print(f" Téléchargement des données pour {ville}...")
     url = (
         f"https://archive-api.open-meteo.com/v1/archive?"
         f"latitude={lat}&longitude={lon}"
@@ -46,7 +46,7 @@ def get_openmeteo_data(lat, lon, ville):
         return pd.DataFrame()
 
 def download_all():
-    print("🚀 Démarrage de la collecte historique sur 5 ans...\n")
+    print(" Démarrage de la collecte historique sur 5 ans...\n")
     dfs = []
 
     for ville, (lat, lon) in VILLES.items():
@@ -68,8 +68,6 @@ def download_all():
         df_total.to_csv(OUTPUT_FILE, index=False)
         print(f"\n✅ Données enregistrées dans: {OUTPUT_FILE}")
     else:
-        print("⚠️ Aucune donnée téléchargée.")
+        print(" Aucune donnée téléchargée.")
 
-# Si exécuté directement
-#if __name__ == "__main__":
- #   download_all()
+

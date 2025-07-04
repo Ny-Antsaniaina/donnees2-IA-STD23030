@@ -2,9 +2,10 @@ import os
 import requests
 import pandas as pd
 from datetime import datetime
-from merge_weather_data import merge_weather_data
 
-# Clé API OpenWeather
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+os.makedirs(DATA_DIR, exist_ok=True)
+
 API_KEY = "8d4c33229d157905c817865855474725"
 
 VILLES = [
@@ -15,7 +16,7 @@ VILLES = [
 ]
 
 def extract_weather_data():
-    print("Extraction des données météo...")
+    print(" Extraction des données météo...")
     all_data = []
 
     for ville in VILLES:
@@ -34,30 +35,30 @@ def extract_weather_data():
                     "weather": item["weather"][0]["main"]
                 })
         except Exception as e:
-            print(f"Erreur extraction {ville['nom']}: {e}")
+            print(f"Erreur {ville['nom']}: {e}")
 
     df = pd.DataFrame(all_data)
-    os.makedirs("data", exist_ok=True)
     date_str = datetime.today().strftime("%Y-%m-%d")
-    df.to_csv(f"data/raw_weather_{date_str}.csv", index=False)
-    print("Extraction terminée.")
+    df.to_csv(os.path.join(DATA_DIR, f"raw_weather_{date_str}.csv"), index=False)
+    print(" Extraction terminée.")
 
 
 def clean_weather_data():
-    print("Nettoyage des données météo...")
+    print(" Nettoyage...")
     date_str = datetime.today().strftime("%Y-%m-%d")
-    df = pd.read_csv(f"data/raw_weather_{date_str}.csv")
+    file_path = os.path.join(DATA_DIR, f"raw_weather_{date_str}.csv")
+    df = pd.read_csv(file_path)
+
     df["date"] = pd.to_datetime(df["date"])
     df["is_rainy"] = df["weather"].apply(lambda w: 1 if "Rain" in w else 0)
     df.dropna(inplace=True)
-    df.to_csv(f"data/clean_weather_{date_str}.csv", index=False)
+    df.to_csv(os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv"), index=False)
     print("✅ Données nettoyées.")
 
-
 def save_weather_data():
-    print("Calcul des statistiques météo journalières...")
+    print(" Calcul des statistiques journalières...")
     date_str = datetime.today().strftime("%Y-%m-%d")
-    df = pd.read_csv(f"data/clean_weather_{date_str}.csv")
+    df = pd.read_csv(os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv"))
     df["date"] = pd.to_datetime(df["date"])
     df["day"] = df["date"].dt.date
 
@@ -67,8 +68,5 @@ def save_weather_data():
     }).reset_index()
 
     summary.columns = ["ville", "day", "temp", "is_rainy"]
-    df_out_path = f"data/stats_weather_{date_str}.csv"
-    summary.to_csv(df_out_path, index=False)
-    print(f"Statistiques enregistrées dans {df_out_path}")
-
-
+    summary.to_csv(os.path.join(DATA_DIR, f"stats_weather_{date_str}.csv"), index=False)
+    print(" Statistiques sauvegardées.")
