@@ -72,8 +72,8 @@ def save_weather_data():
     print(f"Statistiques enregistrées dans {df_out_path}")
 
 
-#if __name__ == "__main__":
-    #extract_weather_data()
-   # clean_weather_data()
-   # save_weather_data()
-  #  merge_weather_data()
+if __name__ == "__main__":
+    extract_weather_data()
+    clean_weather_data()
+    save_weather_data()
+    merge_weather_data()
