@@ -1,15 +1,13 @@
 import pandas as pd
-from datetime import datetime
 import os
-
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
-os.makedirs(DATA_DIR, exist_ok=True)
 
 def merge_weather_data():
-    print("🔗 Fusion des données météo...")
-
+    import traceback
+    print("🔗 Fusion des fichiers météo...")
     try:
         date_str = datetime.today().strftime("%Y-%m-%d")
         start = datetime.now() - relativedelta(years=5)
@@ -20,8 +18,7 @@ def merge_weather_data():
         output_path = os.path.join(DATA_DIR, "merge_weather.csv")
 
         if not os.path.exists(hist_path) or not os.path.exists(recent_path):
-            print("❌ Un ou plusieurs fichiers de données sont manquants.")
-            return
+            raise FileNotFoundError("Fichier historique ou récent manquant")
 
         df_hist = pd.read_csv(hist_path)
         df_recent = pd.read_csv(recent_path)
@@ -35,4 +32,6 @@ def merge_weather_data():
         print(f"✅ Fichier fusionné : {output_path}")
 
     except Exception as e:
-        print(f"❌ Erreur lors de la fusion : {e}")
+        print("❌ ERREUR dans merge_weather_data:")
+        print(traceback.format_exc())
+        raise e

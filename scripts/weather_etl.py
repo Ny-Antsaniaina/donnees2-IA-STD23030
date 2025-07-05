@@ -1,16 +1,15 @@
 import os
-import requests
 import pandas as pd
 from datetime import datetime
 
-# 📁 Répertoire des données
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
-os.makedirs(DATA_DIR, exist_ok=True)
+import requests
 
-# 🔐 Lecture de la clé API depuis une variable d’environnement
-API_KEY = os.getenv("OPENWEATHER_API_KEY")
+from dotenv import load_dotenv
+load_dotenv()
 
-# 🏙️ Liste des villes
+
+API_KEY = os.getenv(f"OPENWEATHER_API_KEY")
+
 VILLES = [
     {"nom": "Antananarivo", "pays": "MG"},
     {"nom": "Paris", "pays": "FR"},
@@ -18,21 +17,25 @@ VILLES = [
     {"nom": "London", "pays": "GB"},
 ]
 
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+os.makedirs(DATA_DIR, exist_ok=True)
+
+
 def extract_weather_data():
-    if not API_KEY:
-        print("❌ ERREUR : clé API non trouvée dans les variables d’environnement.")
-        return
+    import traceback
+    print("Extraction des données OpenWeather...")
+    try:
+        if not API_KEY:
+            raise ValueError("Clé API manquante !")
 
-    print("⏳ Début de l'extraction météo depuis OpenWeather...")
-    all_data = []
+        all_data = []
 
-    for ville in VILLES:
-        try:
+        for ville in VILLES:
             url = (
                 f"https://api.openweathermap.org/data/2.5/forecast"
                 f"?q={ville['nom']},{ville['pays']}&units=metric&appid={API_KEY}"
             )
-            print(f"📡 Requête : {ville['nom']} → {url}")
+            print(f"Requête : {url}")
             r = requests.get(url)
             r.raise_for_status()
             data = r.json()
@@ -46,66 +49,66 @@ def extract_weather_data():
                     "weather": item["weather"][0]["main"]
                 })
 
-            print(f"✅ Données récupérées pour {ville['nom']} : {len(data['list'])} points")
+        if not all_data:
+            raise ValueError("Aucune donnée collectée")
 
-        except Exception as e:
-            print(f"❌ Erreur pour {ville['nom']} : {e}")
-
-    if all_data:
         df = pd.DataFrame(all_data)
-        date_str = datetime.today().strftime("%Y-%m-%d")
-        output_path = os.path.join(DATA_DIR, f"raw_weather_{date_str}.csv")
+        output_path = os.path.join(DATA_DIR, f"raw_weather_{datetime.today().strftime('%Y-%m-%d')}.csv")
         df.to_csv(output_path, index=False)
-        print(f"📁 Données enregistrées dans : {output_path}")
-        print("👀 Aperçu :")
-        print(df.head())
-    else:
-        print("⚠️ Aucun point météo collecté.")
+        print(f"Données extraites : {output_path}")
+
+    except Exception as e:
+        print("ERREUR dans extract_weather_data:")
+        print(traceback.format_exc())
+        raise e
 
 
 def clean_weather_data():
-    print("🧼 Nettoyage des données météo...")
-    date_str = datetime.today().strftime("%Y-%m-%d")
-    file_path = os.path.join(DATA_DIR, f"raw_weather_{date_str}.csv")
+    import traceback
+    print("Nettoyage des données météo...")
+    try:
+        date_str = datetime.today().strftime("%Y-%m-%d")
+        file_path = os.path.join(DATA_DIR, f"raw_weather_{date_str}.csv")
 
-    if not os.path.exists(file_path):
-        print(f"❌ Fichier introuvable : {file_path}")
-        return
+        df = pd.read_csv(file_path)
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df.dropna(subset=["date", "temp", "weather", "humidity"], inplace=True)
+        df["is_rainy"] = df["weather"].apply(lambda w: 1 if "Rain" in w else 0)
 
-    df = pd.read_csv(file_path)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df.dropna(subset=["date", "temp", "weather"], inplace=True)
+        output_path = os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv")
+        df.to_csv(output_path, index=False)
+        print(f"Données nettoyées : {output_path}")
 
-    df["is_rainy"] = df["weather"].apply(lambda w: 1 if "Rain" in w else 0)
-
-    output_path = os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv")
-    df.to_csv(output_path, index=False)
-    print(f"✅ Données nettoyées enregistrées dans : {output_path}")
-    print(df.head())
+    except Exception as e:
+        print("ERREUR dans clean_weather_data:")
+        print(traceback.format_exc())
+        raise e
 
 
 def save_weather_data():
-    print("📊 Calcul des statistiques journalières...")
-    date_str = datetime.today().strftime("%Y-%m-%d")
-    file_path = os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv")
+    import traceback
+    print("Calcul des stats journalières météo...")
+    try:
+        date_str = datetime.today().strftime("%Y-%m-%d")
+        file_path = os.path.join(DATA_DIR, f"clean_weather_{date_str}.csv")
 
-    if not os.path.exists(file_path):
-        print(f"❌ Fichier introuvable : {file_path}")
-        return
+        df = pd.read_csv(file_path)
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df.dropna(subset=["date"], inplace=True)
+        df["day"] = df["date"].dt.date
 
-    df = pd.read_csv(file_path)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df.dropna(subset=["date"], inplace=True)
-    df["day"] = df["date"].dt.date
+        summary = df.groupby(["ville", "day"]).agg({
+            "temp": "mean",
+            "humidity": "mean",
+            "is_rainy": lambda x: 1 if x.sum() > 0 else 0
+        }).reset_index()
 
-    summary = df.groupby(["ville", "day"]).agg({
-        "temp": "mean",
-        "is_rainy": lambda x: 1 if x.sum() > 0 else 0
-    }).reset_index()
+        summary.columns = ["ville", "day", "temp", "humidity", "is_rainy"]
+        output_path = os.path.join(DATA_DIR, f"stats_weather_{date_str}.csv")
+        summary.to_csv(output_path, index=False)
+        print(f"Données sauvegardées : {output_path}")
 
-    summary.columns = ["ville", "day", "temp", "is_rainy"]
-
-    output_path = os.path.join(DATA_DIR, f"stats_weather_{date_str}.csv")
-    summary.to_csv(output_path, index=False)
-    print(f"✅ Statistiques sauvegardées dans : {output_path}")
-    print(summary.head())
+    except Exception as e:
+        print("ERREUR dans save_weather_data:")
+        print(traceback.format_exc())
+        raise e

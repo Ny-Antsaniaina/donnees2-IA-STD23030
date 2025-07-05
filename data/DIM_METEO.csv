@@ -1,0 +1,3 @@
+id_meteo,description,is_rainy
+0,No Rain,0
+1,Rain,1

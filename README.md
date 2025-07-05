@@ -74,8 +74,8 @@ Réalisée dans le notebook : `EDA_weather.ipynb`
 | London       | 11.8°C               | 460 jours      | 51.43          |
 | Antananarivo | 18.4°C               | 230 jours      | 31.06          |
 
-✅ **Ville la plus extrême** : **Tokyo**  
-✅ **Ville la plus stable** : **Antananarivo**
+✅ **Ville la plus extrême** : **London**  
+✅ **Ville la plus stable** : **Tokyo**
 
 ---
 
